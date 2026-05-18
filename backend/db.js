@@ -4,8 +4,8 @@ const sql = require("mssql");
 const dbConfig = {
   user: "ups",
   password: "ups",
-  server: "26.14.83.241", // your SQL server IP
-  port: 5899,
+  server: "myerpcloud.dyndns.org", // your SQL server IP
+  port: 9199,
   database: "UCS", // your database name
   options: {
     encrypt: false,        // set true if using Azurec
