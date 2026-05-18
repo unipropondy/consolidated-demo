@@ -16,7 +16,9 @@ process.on('unhandledRejection', (reason, promise) => {
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: "*"
+}));
 app.use(express.json());
 
 const barcodeRoutes = require("./routes/barcodeRoutes");
@@ -57,6 +59,8 @@ app.get("/api/ping", (req, res) => {
   res.json({ success: true, message: "Backend is reachable!" });
 });
 
-app.listen(5000, () => {
-  console.log("🚀 Server running on port 5000");
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
 });

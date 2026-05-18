@@ -6,7 +6,7 @@ const ConsoleSalesReport = ({ sidebarOpen }) => {
     const today = new Date().toISOString().split('T')[0];
     const [fromDate, setFromDate] = useState(today);
     const [toDate, setToDate] = useState(today);
-
+const API_BASE_URL = "https://consolidated-demo-production.up.railway.app";
     const [reportType, setReportType] = useState("summary");
     const [outputType, setOutputType] = useState("screen");
     const [reportData, setReportData] = useState(null);
@@ -15,7 +15,7 @@ const ConsoleSalesReport = ({ sidebarOpen }) => {
 
     // Fetch organization info on mount
     React.useEffect(() => {
-        axios.get('http://localhost:5000/api/organization')
+       axios.get(`${API_BASE_URL}/api/organization`)
             .then(res => setOrgData(res.data))
             .catch(err => console.error("Org fetch error:", err));
     }, []);
@@ -219,7 +219,7 @@ const ConsoleSalesReport = ({ sidebarOpen }) => {
 
         setLoading(true);
         try {
-            const response = await axios.get("http://localhost:5000/api/consolesales", {
+            const response = await axios.get(`${API_BASE_URL}/api/consolesales`, {
                 params: {
                     type: reportType,
                     fromDate,
