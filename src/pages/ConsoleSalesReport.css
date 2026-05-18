@@ -1,0 +1,220 @@
+/* ConsoleSalesReport.css - Standardized Report Theme */
+
+:root {
+    --der-primary: #34495e;
+    --der-primary-hover: #2c3e50;
+    --der-secondary: #2c3e50;
+    --der-bg: #f0f2f5;
+    --der-card-bg: #ffffff;
+    --der-border: #d1d8dd;
+    --der-table-header: #34495e;
+    --der-text: #333;
+}
+
+.console-sales-report {
+    transition: all 0.3s ease;
+    width: 100%;
+    background: var(--der-bg);
+    min-height: 100vh;
+    padding: 20px;
+    font-family: 'Cambria', 'Times New Roman', serif;
+}
+
+.console-sales-report.sidebar-open {
+    padding-left: 260px;
+}
+
+.der-header-title {
+    background: transparent;
+    color: #2c2c2c;
+    padding: 10px 0;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 5px;
+    font-family: 'Cambria', 'Times New Roman', serif;
+}
+
+.der-filter-container {
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid var(--der-border);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    margin-bottom: 15px;
+}
+
+.der-filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 10px;
+    align-items: flex-end;
+}
+
+.der-filter-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.der-filter-item label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 4px;
+    font-family: 'Cambria', 'Times New Roman', serif;
+}
+
+.der-date-picker {
+    padding: 4px 8px;
+    border: 1px solid var(--der-border);
+    border-radius: 6px;
+    font-size: 11px;
+    background: #fff;
+    height: 28px;
+    outline: none;
+    font-family: 'Cambria', 'Times New Roman', serif;
+}
+
+.der-generate-row {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.der-btn-generate {
+    background-color: var(--der-primary);
+    color: white;
+    border: none;
+    padding: 6px 20px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    box-shadow: 0 4px 10px rgba(52, 73, 94, 0.3);
+    transition: all 0.2s;
+    font-family: 'Cambria', 'Times New Roman', serif;
+}
+
+.der-btn-generate:hover {
+    background-color: var(--der-primary-hover);
+    transform: translateY(-1px);
+}
+
+.der-results-heading {
+    padding: 8px 0;
+    font-size: 13px;
+    font-weight: bold;
+    color: var(--der-secondary);
+    margin-top: 5px;
+    font-family: 'Cambria', 'Times New Roman', serif;
+}
+
+.der-action-bar {
+    display: flex;
+    justify-content: flex-end;
+    padding: 8px 0;
+}
+
+.der-download-btn {
+    background: white;
+    color: var(--der-text);
+    border: 1px solid var(--der-border);
+    border-radius: 6px;
+    padding: 5px 14px;
+    cursor: pointer;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    transition: all 0.2s;
+    font-family: 'Cambria', 'Times New Roman', serif;
+}
+
+.der-download-btn:hover {
+    background: #fdfaf7;
+}
+
+.der-table-container {
+    padding: 0;
+    overflow-x: auto;
+    background: white;
+    border-radius: 12px;
+    border: 1px solid var(--der-border);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    margin-top: 5px;
+}
+
+.der-table-wrapper {
+    padding: 15px;
+}
+
+/* Table Styles */
+.der-table {
+    border-collapse: collapse;
+    font-size: 11px;
+    width: 100%;
+    font-family: 'Cambria', 'Times New Roman', serif;
+}
+
+.der-table th {
+    background-color: var(--der-table-header);
+    color: #ffffff;
+    font-weight: 700;
+    text-align: left;
+    padding: 10px 12px;
+    font-size: 11px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--der-border);
+    font-family: 'Cambria', 'Times New Roman', serif;
+}
+
+.der-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #f0f2f5;
+    font-family: 'Cambria', 'Times New Roman', serif;
+}
+
+/* Section headers */
+.der-section-header td {
+    background: #eaeff2 !important;
+    font-weight: bold;
+    color: #34495e;
+}
+
+/* Total row */
+.der-total-row td {
+    background: #f8f9fa !important;
+    font-weight: bold;
+}
+
+.der-text-center {
+    text-align: center;
+}
+
+.der-text-right {
+    text-align: right;
+}
+
+.der-th-center {
+    text-align: center !important;
+}
+
+.der-th-right {
+    text-align: right !important;
+}
+
+.der-empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: #888;
+    font-size: 12px;
+    font-family: 'Cambria', 'Times New Roman', serif;
+}
+
+@media print {
+    .der-header-title,
+    .der-filter-container,
+    .der-results-heading,
+    .der-action-bar {
+        display: none;
+    }
+}
