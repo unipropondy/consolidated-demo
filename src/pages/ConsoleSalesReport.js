@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import axios from "axios";
 import "./ConsoleSalesReport.css";
 
+const BASE_URL = "https://consolidated-demo-production.up.railway.app";
+
 const ConsoleSalesReport = ({ sidebarOpen }) => {
     const today = new Date().toISOString().split('T')[0];
     const [fromDate, setFromDate] = useState(today);
@@ -15,7 +17,7 @@ const ConsoleSalesReport = ({ sidebarOpen }) => {
 
     // Fetch organization info on mount
     React.useEffect(() => {
-        axios.get('http://localhost:5000/api/organization')
+        axios.get(BASE_URL)
             .then(res => setOrgData(res.data))
             .catch(err => console.error("Org fetch error:", err));
     }, []);
@@ -532,7 +534,7 @@ const ConsoleSalesReport = ({ sidebarOpen }) => {
 
         setLoading(true);
         try {
-            const response = await axios.get("http://localhost:5000/api/consolesales", {
+            const response = await axios.get(BASE_URL, {
                 params: {
                     type: reportType,
                     fromDate,
