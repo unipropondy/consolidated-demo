@@ -6,7 +6,7 @@ const ConsoleSalesReport = ({ sidebarOpen }) => {
     const today = new Date().toISOString().split('T')[0];
     const [fromDate, setFromDate] = useState(today);
     const [toDate, setToDate] = useState(today);
-const API_BASE_URL = "https://consolidated-demo-production.up.railway.app";
+
     const [reportType, setReportType] = useState("summary");
     const [outputType, setOutputType] = useState("screen");
     const [reportData, setReportData] = useState(null);
@@ -15,7 +15,7 @@ const API_BASE_URL = "https://consolidated-demo-production.up.railway.app";
 
     // Fetch organization info on mount
     React.useEffect(() => {
-       axios.get(`${API_BASE_URL}/api/organization`)
+        axios.get('http://localhost:5000/api/organization')
             .then(res => setOrgData(res.data))
             .catch(err => console.error("Org fetch error:", err));
     }, []);
@@ -54,52 +54,130 @@ const API_BASE_URL = "https://consolidated-demo-production.up.railway.app";
         </div>
     );
 
-    // Render Summary Report
+    // Render Summary Report with NEW ORDER: Paymode Breakdown → Sales Breakdown → Total Transactions → Average Bill
     const renderSummaryReport = () => {
-    if (!reportData || !reportData.data) {
-        return <div className="der-empty">No data available</div>;
-    }
-    const data = reportData.data;
-    
-    // Get DishGroupName from the data
-    const dishGroupName = data.DishGroupName || "";
-    
-    return (
-        <table className="der-table">
-            <thead>
-                <tr><th>Particulars</th><th className="der-th-center">Amount</th></tr>
-            </thead>
-            <tbody>
-                <tr className="der-section-header"><td colSpan="2">Report Total</td></tr>
-                <tr><td>Net Sales</td><td className="der-text-right">{(data.NetSales || 0).toFixed(2)}</td></tr>
-                <tr><td>Service Charge</td><td className="der-text-right">{(data.ServiceCharge || 0).toFixed(2)}</td></tr>
-                <tr><td>Tax Collected</td><td className="der-text-right">{(data.TaxCollected || 0).toFixed(2)}</td></tr>
-                <tr><td>Rounding & Excess</td><td className="der-text-right">{(data.Rounding || 0).toFixed(2)}</td></tr>
-                <tr className="der-total-row"><td>Total Revenue</td><td className="der-text-right">{(data.TotalRevenue || 0).toFixed(2)}</td></tr>
+        if (!reportData || !reportData.data) {
+            return <div className="der-empty">No data available</div>;
+        }
+        const data = reportData.data;
+        
+        const dishGroupName = data.DishGroupName || "";
+        
+        return (
+            <table className="der-table">
+                <thead>
+                    <tr><th>Particulars</th><th className="der-th-center">Amount</th></tr>
+                </thead>
+                <tbody>
+                    <tr className="der-section-header"><td colSpan="2">Report Total</td></tr>
+                    <tr><td>Net Sales</td><td className="der-text-right">{(data.NetSales || 0).toFixed(2)}</td></tr>
+                    <tr><td>Service Charge</td><td className="der-text-right">{(data.ServiceCharge || 0).toFixed(2)}</td></tr>
+                    <tr><td>Tax Collected</td><td className="der-text-right">{(data.TaxCollected || 0).toFixed(2)}</td></tr>
+                    <tr><td>Rounding & Excess</td><td className="der-text-right">{(data.Rounding || 0).toFixed(2)}</td></tr>
+                    <tr className="der-total-row"><td>Total Revenue</td><td className="der-text-right">{(data.TotalRevenue || 0).toFixed(2)}</td></tr>
 
-                {/* Sales Section with DishGroupName */}
-                <tr className="der-section-header"><td colSpan="2">Sales</td></tr>
-                <tr>
-                    <td style={{ paddingLeft: '20px' }}>{dishGroupName}</td>
-                    <td className="der-text-right">{(data.NetSales || 0).toFixed(2)}</td>
-                </tr>
-                <tr className="der-total-row">
-                    <td style={{ paddingLeft: '20px' }}>Total Sales</td>
-                    <td className="der-text-right">{(data.NetSales || 0).toFixed(2)}</td>
-                </tr>
+                    <tr className="der-section-header"><td colSpan="2">Sales</td></tr>
+                    <tr>
+                        <td style={{ paddingLeft: '20px' }}>{dishGroupName}</td>
+                        <td className="der-text-right">{(data.NetSales || 0).toFixed(2)}</td>
+                    </tr>
 
-                <tr className="der-section-header"><td colSpan="2">Tax & SVC</td></tr>
-                <tr><td>Service Charge</td><td className="der-text-right">{(data.ServiceCharge || 0).toFixed(2)}</td></tr>
-                <tr><td>Tax Collected</td><td className="der-text-right">{(data.TaxCollected || 0).toFixed(2)}</td></tr>
+                    {/* 1. PAYMODE BREAKDOWN - FIRST */}
+                    <tr className="der-section-header"><td colSpan="2">Paymode Breakdown</td></tr>
+                    {['CASH', 'CARD', 'NETS', 'CDC', 'VOUCHER'].map((mode) => (
+                        <tr key={mode}>
+                            <td style={{ paddingLeft: '20px' }}>{mode}</td>
+                            <td className="der-text-right">
+                                {(reportData?.paymodeBreakdown?.[mode]?.amount || 0).toFixed(2)}
+                            </td>
+                        </tr>
+                    ))}
 
-                <tr className="der-section-header"><td colSpan="2">Discount</td></tr>
-                <tr><td>Total Discount</td><td className="der-text-right">{(data.TotalDiscount || 0).toFixed(2)}</td></tr>
-            </tbody>
-        </table>
-    );
-};
+                    {/* 2. SALES BREAKDOWN - SECOND */}
+                    <tr className="der-section-header"><td colSpan="2">Sales Breakdown</td></tr>
+                    
+                    {/* a) Sales by Category */}
+                    {reportData?.salesByCategory?.map((cat, idx) => (
+                        <tr key={`cat-${idx}`}>
+                            <td style={{ paddingLeft: '20px' }}>Sales by Category - {cat.CategoryName}</td>
+                            <td className="der-text-right">{cat.TotalSales.toFixed(2)}</td>
+                        </tr>
+                    ))}
 
-    // Render Detail Report
+                    {/* b) Sales by Department */}
+                    {reportData?.salesByDepartment?.map((dept, idx) => {
+                        const departmentName = dept.DepartmentName?.trim() || 'Uncategorized';
+                        return (
+                            <tr key={`dept-${idx}`}>
+                                <td style={{ paddingLeft: '20px' }}>Sales by Department - {departmentName}</td>
+                                <td className="der-text-right">{dept.TotalSales.toFixed(2)}</td>
+                            </tr>
+                        );
+                    })}
+
+                    {/* c) Top selling category */}
+                    {reportData?.salesByCategory?.[0] && (
+                        <tr>
+                            <td style={{ paddingLeft: '20px' }}>Top Selling Category</td>
+                            <td className="der-text-right">{reportData.salesByCategory[0].CategoryName}</td>
+                        </tr>
+                    )}
+
+                    {/* d) Top selling item */}
+                    {reportData?.topSellingItems?.[0] && (
+                        <tr>
+                            <td style={{ paddingLeft: '20px' }}>Top Selling Item</td>
+                            <td className="der-text-right">{reportData.topSellingItems[0].ItemName}</td>
+                        </tr>
+                    )}
+
+                    {/* e) Slow-moving category */}
+                    {reportData?.slowMovingCategory?.[0] && (
+                        <tr>
+                            <td style={{ paddingLeft: '20px' }}>Slow-moving Category</td>
+                            <td className="der-text-right">{reportData.slowMovingCategory[0].CategoryName}</td>
+                        </tr>
+                    )}
+
+                    {/* f) Slow-moving item */}
+                    {reportData?.slowMovingItems?.[0] && (
+                        <tr>
+                            <td style={{ paddingLeft: '20px' }}>Slow-moving Item</td>
+                            <td className="der-text-right">{reportData.slowMovingItems[0].ItemName}</td>
+                        </tr>
+                    )}
+
+                    <tr className="der-total-row">
+                        <td style={{ paddingLeft: '20px' }}>Total Sales</td>
+                        <td className="der-text-right">{(data.NetSales || 0).toFixed(2)}</td>
+                    </tr>
+
+                    {/* 3. TOTAL TRANSACTIONS COUNT - THIRD */}
+                    <tr className="der-section-header"><td colSpan="2">Total Transactions Count</td></tr>
+                    <tr>
+                        <td>Total Transactions</td>
+                        <td className="der-text-right">{reportData?.totalReceipts || 0}</td>
+                    </tr>
+
+                    {/* 4. AVERAGE BILL VALUE - FOURTH */}
+                    <tr className="der-section-header"><td colSpan="2">Average Bill Value</td></tr>
+                    <tr>
+                        <td>Average Bill</td>
+                        <td className="der-text-right">{(parseFloat(reportData?.averageReceipt || 0)).toFixed(2)}</td>
+                    </tr>
+
+                    <tr className="der-section-header"><td colSpan="2">Tax & SVC</td></tr>
+                    <tr><td>Service Charge</td><td className="der-text-right">{(data.ServiceCharge || 0).toFixed(2)}</td></tr>
+                    <tr><td>Tax Collected</td><td className="der-text-right">{(data.TaxCollected || 0).toFixed(2)}</td></tr>
+
+                    <tr className="der-section-header"><td colSpan="2">Discount</td></tr>
+                    <tr><td>Total Discount</td><td className="der-text-right">{(data.TotalDiscount || 0).toFixed(2)}</td></tr>
+                </tbody>
+            </table>
+        );
+    };
+
+    // Render Detail Report with NEW ORDER
     const renderDetailReport = () => {
         if (!reportData || !reportData.data || !Array.isArray(reportData.data) || reportData.data.length === 0) {
             return <div className="der-empty">No data available</div>;
@@ -123,93 +201,328 @@ const API_BASE_URL = "https://consolidated-demo-production.up.railway.app";
         });
 
         return (
-            <table className="der-table">
-                <thead>
-                    <tr>
-                        <th>DishCode</th>
-                        <th>Name</th>
-                        <th className="der-th-center">Qty</th>
-                        <th className="der-th-center">%</th>
-                        <th className="der-th-center">Gross</th>
-                        <th className="der-th-center">Disc</th>
-                        <th className="der-th-center">%</th>
-                        <th className="der-th-center">Disc.Gross</th>
-                        <th className="der-th-center">%</th>
-                        <th className="der-th-center">Net</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {Object.keys(groupedData).map((group, gIdx) => {
-                        let groupTotalGross = 0;
-                        let groupTotalDiscount = 0;
-                        let groupTotalNet = 0;
-                        let groupTotalQty = 0;
+            <div>
+                {/* SALES REPORT TABLE */}
+                <table className="der-table">
+                    <thead>
+                        <tr>
+                            <th>DishCode</th>
+                            <th>Name</th>
+                            <th className="der-th-center">Qty</th>
+                            <th className="der-th-center">%</th>
+                            <th className="der-th-center">Gross</th>
+                            <th className="der-th-center">Disc</th>
+                            <th className="der-th-center">%</th>
+                            <th className="der-th-center">Disc.Gross</th>
+                            <th className="der-th-center">%</th>
+                            <th className="der-th-center">Net</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {Object.keys(groupedData).map((group, gIdx) => {
+                            let groupTotalGross = 0;
+                            let groupTotalDiscount = 0;
+                            let groupTotalNet = 0;
+                            let groupTotalQty = 0;
 
-                        return (
-                            <React.Fragment key={gIdx}>
-                                <tr className="der-section-header">
-                                    <td colSpan="10">Dish Group : {group}</td>
-                                </tr>
-                                {groupedData[group].map((item, idx) => {
-                                    groupTotalGross += item.BaseAmount || 0;
-                                    groupTotalDiscount += item.ManualDiscountAmount || 0;
-                                    groupTotalNet += item.TotalDetailLineAmount || 0;
-                                    groupTotalQty += item.Quantity || 0;
+                            return (
+                                <React.Fragment key={gIdx}>
+                                    <tr className="der-section-header">
+                                        <td colSpan="10">Dish Group : {group}</td>
+                                    </tr>
+                                    {groupedData[group].map((item, idx) => {
+                                        groupTotalGross += item.BaseAmount || 0;
+                                        groupTotalDiscount += item.ManualDiscountAmount || 0;
+                                        groupTotalNet += item.TotalDetailLineAmount || 0;
+                                        groupTotalQty += item.Quantity || 0;
 
-                                    const grossPercent = grandTotalGross > 0 ? ((item.BaseAmount / grandTotalGross) * 100).toFixed(2) : "0.00";
-                                    const netPercent = grandTotalNet > 0 ? ((item.TotalDetailLineAmount / grandTotalNet) * 100).toFixed(2) : "0.00";
+                                        const grossPercent = grandTotalGross > 0 ? ((item.BaseAmount / grandTotalGross) * 100).toFixed(2) : "0.00";
+                                        const netPercent = grandTotalNet > 0 ? ((item.TotalDetailLineAmount / grandTotalNet) * 100).toFixed(2) : "0.00";
 
-                                    return (
-                                        <tr key={idx}>
-                                            <td>{item.DishCode || ""}</td>
-                                            <td>{item.DishName || ""}</td>
-                                            <td className="der-text-right">{item.Quantity || 0}</td>
-                                            <td className="der-text-right">{grossPercent}%</td>
-                                            <td className="der-text-right">{(item.BaseAmount || 0).toFixed(2)}</td>
-                                            <td className="der-text-right">{(item.ManualDiscountAmount || 0).toFixed(2)}</td>
-                                            <td className="der-text-right">0.00%</td>
-                                            <td className="der-text-right">{(item.TotalDetailLineAmount || 0).toFixed(2)}</td>
-                                            <td className="der-text-right">{netPercent}%</td>
-                                            <td className="der-text-right">{(item.TotalDetailLineAmount || 0).toFixed(2)}</td>
+                                        return (
+                                            <tr key={idx}>
+                                                <td>{item.DishCode || ""}</td>
+                                                <td>{item.DishName || ""}</td>
+                                                <td className="der-text-right">{item.Quantity || 0}</td>
+                                                <td className="der-text-right">{grossPercent}%</td>
+                                                <td className="der-text-right">{(item.BaseAmount || 0).toFixed(2)}</td>
+                                                <td className="der-text-right">{(item.ManualDiscountAmount || 0).toFixed(2)}</td>
+                                                <td className="der-text-right">0.00%</td>
+                                                <td className="der-text-right">{(item.TotalDetailLineAmount || 0).toFixed(2)}</td>
+                                                <td className="der-text-right">{netPercent}%</td>
+                                                <td className="der-text-right">{(item.TotalDetailLineAmount || 0).toFixed(2)}</td>
+                                            </tr>
+                                        );
+                                    })}
+                                    <tr className="der-total-row">
+                                        <td colSpan="2">Group Total</td>
+                                        <td className="der-text-right">{groupTotalQty}</td>
+                                        <td></td>
+                                        <td className="der-text-right">{groupTotalGross.toFixed(2)}</td>
+                                        <td className="der-text-right">{groupTotalDiscount.toFixed(2)}</td>
+                                        <td></td>
+                                        <td className="der-text-right">{groupTotalNet.toFixed(2)}</td>
+                                        <td></td>
+                                        <td className="der-text-right">{groupTotalNet.toFixed(2)}</td>
+                                    </tr>
+                                </React.Fragment>
+                            );
+                        })}
+
+                        <tr className="der-total-row" style={{ backgroundColor: '#d1d8dd' }}>
+                            <td colSpan="2">Grand Total</td>
+                            <td className="der-text-right">{grandTotalQuantity}</td>
+                            <td></td>
+                            <td className="der-text-right">{grandTotalGross.toFixed(2)}</td>
+                            <td className="der-text-right">{grandTotalDiscount.toFixed(2)}</td>
+                            <td></td>
+                            <td className="der-text-right">{grandTotalNet.toFixed(2)}</td>
+                            <td></td>
+                            <td className="der-text-right">{grandTotalNet.toFixed(2)}</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                {/* NEW FEATURES - IN CORRECT ORDER */}
+                <div style={{ marginTop: '30px' }}>
+                    <hr style={{ border: '1px solid #34495e', marginBottom: '20px' }} />
+                    
+                    {/* 1. PAYMODE BREAKDOWN - FIRST */}
+                    {reportData.paymodeBreakdown && (
+                        <div style={{ marginBottom: '30px' }}>
+                            <h3 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '10px', color: '#34495e', borderLeft: '4px solid #34495e', paddingLeft: '10px' }}>
+                                1. Paymode Breakdown
+                            </h3>
+                            <table className="der-table" style={{ width: '100%' }}>
+                                <thead>
+                                    <tr>
+                                        <th>Payment Mode</th>
+                                        <th className="der-th-center">Transaction Count</th>
+                                        <th className="der-th-right">Amount (SGD)</th>
+                                        <th className="der-th-center">Percentage</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {(() => {
+                                        const paymodes = ['Cash', 'Card', 'NETS', 'CDC', 'Voucher'];
+                                        const totalAmount = Object.values(reportData.paymodeBreakdown).reduce((sum, mode) => sum + (mode?.amount || 0), 0);
+                                        return paymodes.map(mode => {
+                                            const data = reportData.paymodeBreakdown[mode];
+                                            if (data && data.amount > 0) {
+                                                const percentage = totalAmount > 0 ? ((data.amount / totalAmount) * 100).toFixed(2) : '0.00';
+                                                return (
+                                                    <tr key={mode}>
+                                                        <td><strong>{mode}</strong></td>
+                                                        <td className="der-text-right">{data.count}</td>
+                                                        <td className="der-text-right">{data.amount.toFixed(2)}</td>
+                                                        <td className="der-text-right">{percentage}%</td>
+                                                    </tr>
+                                                );
+                                            }
+                                            return (
+                                                <tr key={mode}>
+                                                    <td><strong>{mode}</strong></td>
+                                                    <td className="der-text-right">0</td>
+                                                    <td className="der-text-right">0.00</td>
+                                                    <td className="der-text-right">0%</td>
+                                                </tr>
+                                            );
+                                        });
+                                    })()}
+                                    <tr className="der-total-row">
+                                        <td><strong>Total</strong></td>
+                                        <td className="der-text-right"><strong>{reportData.totalReceipts || 0}</strong></td>
+                                        <td className="der-text-right"><strong>
+                                            {Object.values(reportData.paymodeBreakdown).reduce((sum, mode) => sum + (mode?.amount || 0), 0).toFixed(2)}
+                                        </strong></td>
+                                        <td className="der-text-right"><strong>100%</strong></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+
+                    {/* 2. SALES BREAKDOWN - SECOND */}
+                    <div style={{ marginBottom: '20px' }}>
+                        <h3 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '15px', color: '#34495e', borderLeft: '4px solid #34495e', paddingLeft: '10px' }}>
+                            2. Sales Breakdown
+                        </h3>
+                        
+                        {/* a) Sales by Category */}
+                        {reportData.salesByCategory && reportData.salesByCategory.length > 0 && (
+                            <div style={{ marginBottom: '25px' }}>
+                                <h4 style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '8px', color: '#27ae60' }}>a) Sales by Category</h4>
+                                <table className="der-table" style={{ width: '100%' }}>
+                                    <thead>
+                                        <tr>
+                                            <th>Category Name</th>
+                                            <th className="der-th-right">Quantity Sold</th>
+                                            <th className="der-th-right">Sales Amount (SGD)</th>
+                                            <th className="der-th-center">% of Total</th>
                                         </tr>
-                                    );
-                                })}
-                                <tr className="der-total-row">
-                                    <td colSpan="2">Group Total</td>
-                                    <td className="der-text-right">{groupTotalQty}</td>
-                                    <td></td>
-                                    <td className="der-text-right">{groupTotalGross.toFixed(2)}</td>
-                                    <td className="der-text-right">{groupTotalDiscount.toFixed(2)}</td>
-                                    <td></td>
-                                    <td className="der-text-right">{groupTotalNet.toFixed(2)}</td>
-                                    <td></td>
-                                    <td className="der-text-right">{groupTotalNet.toFixed(2)}</td>
-                                </tr>
-                            </React.Fragment>
-                        );
-                    })}
+                                    </thead>
+                                    <tbody>
+                                        {reportData.salesByCategory.map((cat, idx) => {
+                                            const percentage = grandTotalNet > 0 ? ((cat.TotalSales / grandTotalNet) * 100).toFixed(2) : '0.00';
+                                            return (
+                                                <tr key={idx}>
+                                                    <td>{cat.CategoryName}</td>
+                                                    <td className="der-text-right">{cat.TotalQuantity}</td>
+                                                    <td className="der-text-right">{cat.TotalSales.toFixed(2)}</td>
+                                                    <td className="der-text-right">{percentage}%</td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
 
-                    <tr className="der-total-row" style={{ backgroundColor: '#d1d8dd' }}>
-                        <td colSpan="2">Grand Total</td>
-                        <td className="der-text-right">{grandTotalQuantity}</td>
-                        <td></td>
-                        <td className="der-text-right">{grandTotalGross.toFixed(2)}</td>
-                        <td className="der-text-right">{grandTotalDiscount.toFixed(2)}</td>
-                        <td></td>
-                        <td className="der-text-right">{grandTotalNet.toFixed(2)}</td>
-                        <td></td>
-                        <td className="der-text-right">{grandTotalNet.toFixed(2)}</td>
-                    </tr>
+                        {/* b) Sales by Department */}
+                        {reportData.salesByDepartment && reportData.salesByDepartment.length > 0 && (
+                            <div style={{ marginBottom: '25px' }}>
+                                <h4 style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '8px', color: '#27ae60' }}>b) Sales by Department</h4>
+                                <table className="der-table" style={{ width: '100%' }}>
+                                    <thead>
+                                        <tr>
+                                            <th>Department Name</th>
+                                            <th className="der-th-right">Quantity Sold</th>
+                                            <th className="der-th-right">Sales Amount (SGD)</th>
+                                            <th className="der-th-center">% of Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {reportData.salesByDepartment.map((dept, idx) => {
+                                            const departmentName = dept.DepartmentName?.trim() || 'Uncategorized';
+                                            const percentage = grandTotalNet > 0 ? ((dept.TotalSales / grandTotalNet) * 100).toFixed(2) : '0.00';
+                                            return (
+                                                <tr key={idx}>
+                                                    <td>{departmentName}</td>
+                                                    <td className="der-text-right">{dept.TotalQuantity}</td>
+                                                    <td className="der-text-right">{dept.TotalSales.toFixed(2)}</td>
+                                                    <td className="der-text-right">{percentage}%</td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
 
-                    <tr className="der-total-row">
-                        <td colSpan="5" align="left">Total Receipts : {reportData.totalReceipts || 0}</td>
-                        <td colSpan="5" align="right">Average/Receipt : {reportData.averageReceipt || "0.00"}</td>
-                    </tr>
-                </tbody>
-            </table>
+                        {/* c) Top selling category */}
+                        {reportData.salesByCategory && reportData.salesByCategory.length > 0 && (
+                            <div style={{ marginBottom: '20px', padding: '12px', background: '#e8f8f5', borderRadius: '8px', border: '1px solid #27ae60' }}>
+                                <h4 style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '5px', color: '#27ae60' }}>c) Top Selling Category ⭐</h4>
+                                <p style={{ fontSize: '13px', margin: 0 }}>
+                                    <strong>{reportData.salesByCategory[0]?.CategoryName || 'N/A'}</strong> - 
+                                    ${reportData.salesByCategory[0]?.TotalSales?.toFixed(2) || '0.00'} 
+                                    ({reportData.salesByCategory[0]?.TotalQuantity || 0} units sold)
+                                </p>
+                            </div>
+                        )}
+
+                        {/* d) Top selling item */}
+                        {reportData.topSellingItems && reportData.topSellingItems.length > 0 && (
+                            <div style={{ marginBottom: '25px' }}>
+                                <h4 style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '8px', color: '#27ae60' }}>d) Top Selling Items ⭐</h4>
+                                <table className="der-table" style={{ width: '100%' }}>
+                                    <thead>
+                                        <tr>
+                                            <th>Rank</th>
+                                            <th>Item Code</th>
+                                            <th>Item Name</th>
+                                            <th>Category</th>
+                                            <th className="der-th-right">Quantity</th>
+                                            <th className="der-th-right">Sales (SGD)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {reportData.topSellingItems.map((item, idx) => (
+                                            <tr key={idx} style={idx === 0 ? { backgroundColor: '#fff9e6' } : {}}>
+                                                <td className="der-text-center">#{idx + 1}</td>
+                                                <td>{item.DishCode}</td>
+                                                <td><strong>{item.ItemName}</strong></td>
+                                                <td>{item.Category}</td>
+                                                <td className="der-text-right">{item.TotalQuantity}</td>
+                                                <td className="der-text-right">{item.TotalSales.toFixed(2)}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+
+                        {/* e) Slow-moving category */}
+                        {reportData.slowMovingCategory && reportData.slowMovingCategory.length > 0 && (
+                            <div style={{ marginBottom: '20px', padding: '12px', background: '#fdedec', borderRadius: '8px', border: '1px solid #e74c3c' }}>
+                                <h4 style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '5px', color: '#e74c3c' }}>e) Slow-moving Category ⚠️</h4>
+                                <p style={{ fontSize: '13px', margin: 0 }}>
+                                    <strong>{reportData.slowMovingCategory[0]?.CategoryName || 'N/A'}</strong> - 
+                                    ${reportData.slowMovingCategory[0]?.TotalSales?.toFixed(2) || '0.00'} 
+                                    ({reportData.slowMovingCategory[0]?.TotalQuantity || 0} units sold)
+                                </p>
+                            </div>
+                        )}
+
+                        {/* f) Slow-moving item */}
+                        {reportData.slowMovingItems && reportData.slowMovingItems.length > 0 && (
+                            <div style={{ marginBottom: '15px' }}>
+                                <h4 style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '8px', color: '#e74c3c' }}>f) Slow-moving Items (Lowest Sales) ⚠️</h4>
+                                <table className="der-table" style={{ width: '100%' }}>
+                                    <thead>
+                                        <tr>
+                                            <th>Rank</th>
+                                            <th>Item Code</th>
+                                            <th>Item Name</th>
+                                            <th>Category</th>
+                                            <th className="der-th-right">Quantity</th>
+                                            <th className="der-th-right">Sales (SGD)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {reportData.slowMovingItems.map((item, idx) => (
+                                            <tr key={idx}>
+                                                <td className="der-text-center">#{idx + 1}</td>
+                                                <td>{item.DishCode}</td>
+                                                <td>{item.ItemName}</td>
+                                                <td>{item.Category}</td>
+                                                <td className="der-text-right">{item.TotalQuantity}</td>
+                                                <td className="der-text-right">{item.TotalSales.toFixed(2)}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* 3. TOTAL TRANSACTIONS COUNT - THIRD */}
+                    <div style={{ 
+                        display: 'flex', 
+                        gap: '20px', 
+                        marginBottom: '30px',
+                        padding: '15px',
+                        background: '#f8f9fa',
+                        borderRadius: '8px',
+                        border: '1px solid #d1d8dd'
+                    }}>
+                        <div style={{ flex: 1, textAlign: 'center' }}>
+                            <div style={{ fontSize: '12px', color: '#666', marginBottom: '5px' }}>📊 3. Total Transactions</div>
+                            <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#34495e' }}>{reportData.totalReceipts || 0}</div>
+                        </div>
+                        <div style={{ flex: 1, textAlign: 'center' }}>
+                            <div style={{ fontSize: '12px', color: '#666', marginBottom: '5px' }}>💰 4. Average Bill Value</div>
+                            <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#34495e' }}>${reportData.averageReceipt || '0.00'}</div>
+                        </div>
+                        <div style={{ flex: 1, textAlign: 'center' }}>
+                            <div style={{ fontSize: '12px', color: '#666', marginBottom: '5px' }}>💵 Total Net Sales</div>
+                            <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#34495e' }}>${grandTotalNet.toFixed(2)}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         );
     };
-
 
     const handleGenerate = async () => {
         if (!fromDate || !toDate) {
@@ -219,7 +532,7 @@ const API_BASE_URL = "https://consolidated-demo-production.up.railway.app";
 
         setLoading(true);
         try {
-            const response = await axios.get(`${API_BASE_URL}/api/consolesales`, {
+            const response = await axios.get("http://localhost:5000/api/consolesales", {
                 params: {
                     type: reportType,
                     fromDate,
@@ -267,7 +580,7 @@ const API_BASE_URL = "https://consolidated-demo-production.up.railway.app";
                 }
                 body { 
                     font-family: 'Cambria', 'Times New Roman', serif; 
-                    background: white; 
+                    background: #f0f2f5; 
                     margin: 0; 
                     padding: 20px; 
                     display: flex; 
@@ -275,11 +588,13 @@ const API_BASE_URL = "https://consolidated-demo-production.up.railway.app";
                 }
                 .a4-page {
                     background: white;
-                    width: 100%;
+                    width: 210mm;
                     min-height: 297mm;
-                    padding: 15px;
+                    padding: 15mm 20mm 5mm 20mm;
                     box-sizing: border-box;
+                    box-shadow: 0 0 15px rgba(0,0,0,0.1);
                     color: #333;
+                    border: 1px solid #d1d8dd;
                     display: flex;
                     flex-direction: column;
                 }
@@ -408,6 +723,27 @@ const API_BASE_URL = "https://consolidated-demo-production.up.railway.app";
                 th.amount-col {
                     text-align: center;
                 }
+                .summary-card {
+                    display: flex;
+                    gap: 20px;
+                    margin-bottom: 20px;
+                    padding: 15px;
+                    background: #f8f9fa;
+                    border-radius: 8px;
+                }
+                .card {
+                    flex: 1;
+                    text-align: center;
+                }
+                .card-label {
+                    font-size: 12px;
+                    color: #666;
+                }
+                .card-value {
+                    font-size: 24px;
+                    font-weight: bold;
+                    color: #34495e;
+                }
             </style>
         </head>
         <body>
@@ -433,10 +769,7 @@ const API_BASE_URL = "https://consolidated-demo-production.up.railway.app";
             htmlContent += `
                 <table>
                     <thead>
-                        <tr>
-                            <th>Particulars</th>
-                            <th class="amount-col">Amount</th>
-                        </tr>
+                        <tr><th>Particulars</th><th class="amount-col">Amount</th></tr>
                     </thead>
                     <tbody>
                         <tr class="section-head"><td colspan="2">Report Total</td></tr>
@@ -449,6 +782,34 @@ const API_BASE_URL = "https://consolidated-demo-production.up.railway.app";
                         <tr class="section-head"><td colspan="2">Sales</td></tr>
                         <tr><td>Total Sales</td><td class="amount-col">${(reportData.data.NetSales || 0).toFixed(2)}</td></tr>
                         
+                        <!-- 1. PAYMODE BREAKDOWN -->
+                        <tr class="section-head"><td colspan="2">Paymode Breakdown</td></tr>
+                        ${['CASH', 'CARD', 'NETS', 'CDC', 'VOUCHER'].map(mode => `
+                        <tr><td>${mode}</td><td class="amount-col">${(reportData?.paymodeBreakdown?.[mode]?.amount || 0).toFixed(2)}</td></tr>
+                        `).join('')}
+                        
+                        <!-- 2. SALES BREAKDOWN -->
+                        <tr class="section-head"><td colspan="2">Sales Breakdown</td></tr>
+                        ${reportData?.salesByCategory?.map(cat => `
+                        <tr><td>Sales by Category - ${cat.CategoryName}</td><td class="amount-col">${cat.TotalSales.toFixed(2)}</td></tr>
+                        `).join('')}
+                        ${reportData?.salesByDepartment?.map(dep => `
+                        <tr><td>Sales by Department - ${dep.DepartmentName || '-'}</td><td class="amount-col">${dep.TotalSales.toFixed(2)}</td></tr>
+                        `).join('')}
+                        
+                        ${reportData?.salesByCategory?.[0] ? `<tr><td>Top Selling Category</td><td class="amount-col">${reportData.salesByCategory[0].CategoryName}</td></tr>` : ''}
+                        ${reportData?.topSellingItems?.[0] ? `<tr><td>Top Selling Item</td><td class="amount-col">${reportData.topSellingItems[0].ItemName}</td></tr>` : ''}
+                        ${reportData?.slowMovingCategory?.[0] ? `<tr><td>Slow-moving Category</td><td class="amount-col">${reportData.slowMovingCategory[0].CategoryName}</td></tr>` : ''}
+                        ${reportData?.slowMovingItems?.[0] ? `<tr><td>Slow-moving Item</td><td class="amount-col">${reportData.slowMovingItems[0].ItemName}</td></tr>` : ''}
+                        
+                        <!-- 3. TOTAL TRANSACTIONS COUNT -->
+                        <tr class="section-head"><td colspan="2">Total Transactions Count</td></tr>
+                        <tr><td>Total Transactions</td><td class="amount-col">${reportData?.totalReceipts || 0}</td></tr>
+                        
+                        <!-- 4. AVERAGE BILL VALUE -->
+                        <tr class="section-head"><td colspan="2">Average Bill Value</td></tr>
+                        <tr><td>Average Bill</td><td class="amount-col">${(parseFloat(reportData?.averageReceipt || 0)).toFixed(2)}</td></tr>
+                        
                         <tr class="section-head"><td colspan="2">Tax & SVC</td></tr>
                         <tr><td>Service Charge</td><td class="amount-col">${(reportData.data.ServiceCharge || 0).toFixed(2)}</td></tr>
                         <tr><td>Tax Collected</td><td class="amount-col">${(reportData.data.TaxCollected || 0).toFixed(2)}</td></tr>
@@ -459,122 +820,127 @@ const API_BASE_URL = "https://consolidated-demo-production.up.railway.app";
                 </table>
             `;
         } else {
+            // Detail Report HTML
+            const totalNetSales = reportData.data.reduce((sum, item) => sum + (item.TotalDetailLineAmount || 0), 0);
+            
             htmlContent += `
-                <table>
+                <div class="summary-card">
+                    <div class="card">
+                        <div class="card-label">Total Transactions</div>
+                        <div class="card-value">${reportData.totalReceipts || 0}</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-label">Average Bill Value</div>
+                        <div class="card-value">$${reportData.averageReceipt || '0.00'}</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-label">Total Net Sales</div>
+                        <div class="card-value">$${totalNetSales.toFixed(2)}</div>
+                    </div>
+                </div>
+            `;
+            
+            // Paymode Breakdown Table
+            if (reportData.paymodeBreakdown) {
+                htmlContent += `<h3 style="font-size: 14px; margin-top: 20px;">1. Paymode Breakdown</h3>`;
+                htmlContent += `
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                        <thead>
+                            <tr style="background: #34495e; color: white;">
+                                <th style="padding: 8px;">Payment Mode</th>
+                                <th style="padding: 8px;">Transaction Count</th>
+                                <th style="padding: 8px;">Amount (SGD)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${Object.entries(reportData.paymodeBreakdown).map(([mode, data]) => {
+                                if (data.amount > 0) {
+                                    return `
+                                        <tr>
+                                            <td style="padding: 6px; border: 1px solid #ddd;">${mode}</td>
+                                            <td style="padding: 6px; border: 1px solid #ddd; text-align: right;">${data.count}</td>
+                                            <td style="padding: 6px; border: 1px solid #ddd; text-align: right;">${data.amount.toFixed(2)}</td>
+                                        </tr>
+                                    `;
+                                }
+                                return '';
+                            }).join('')}
+                        </tbody>
+                    </table>
+                `;
+            }
+            
+            // Top Selling Items
+            if (reportData.topSellingItems && reportData.topSellingItems.length > 0) {
+                htmlContent += `<h3 style="font-size: 14px; margin-top: 20px;">2. Top Selling Items</h3>`;
+                htmlContent += `
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                        <thead>
+                            <tr style="background: #34495e; color: white;">
+                                <th style="padding: 8px;">Item Name</th>
+                                <th style="padding: 8px;">Category</th>
+                                <th style="padding: 8px;">Quantity</th>
+                                <th style="padding: 8px;">Sales (SGD)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${reportData.topSellingItems.map(item => `
+                                <tr>
+                                    <td style="padding: 6px; border: 1px solid #ddd;">${item.ItemName}</td>
+                                    <td style="padding: 6px; border: 1px solid #ddd;">${item.Category}</td>
+                                    <td style="padding: 6px; border: 1px solid #ddd; text-align: right;">${item.TotalQuantity}</td>
+                                    <td style="padding: 6px; border: 1px solid #ddd; text-align: right;">${item.TotalSales.toFixed(2)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            }
+            
+            // Detailed Sales Table
+            htmlContent += `<h3 style="font-size: 14px; margin-top: 25px;">Detailed Sales Report</h3>`;
+            htmlContent += `
+                <table style="width: 100%; border-collapse: collapse;">
                     <thead>
-                        <tr>
-                            <th>DishCode</th>
-                            <th>Name</th>
-                            <th>Qty</th>
-                            <th>%</th>
-                            <th>Gross</th>
-                            <th>Disc</th>
-                            <th>%</th>
-                            <th>Disc.Gross</th>
-                            <th>%</th>
-                            <th>Net</th>
+                        <tr style="background: #34495e; color: white;">
+                            <th style="padding: 8px;">DishCode</th>
+                            <th style="padding: 8px;">Name</th>
+                            <th style="padding: 8px;">Qty</th>
+                            <th style="padding: 8px;">Gross</th>
+                            <th style="padding: 8px;">Disc</th>
+                            <th style="padding: 8px;">Net</th>
                         </tr>
                     </thead>
                     <tbody>
-            `;
-
-            let grandTotalGross = 0;
-            let grandTotalDiscount = 0;
-            let grandTotalNet = 0;
-            let grandTotalQuantity = 0;
-
-            const groupedData = reportData.data.reduce((acc, item) => {
-                const group = item.DishGroupIdName || "Uncategorized";
-                if (!acc[group]) acc[group] = [];
-                acc[group].push(item);
-                grandTotalGross += item.BaseAmount || 0;
-                grandTotalDiscount += item.ManualDiscountAmount || 0;
-                grandTotalNet += item.TotalDetailLineAmount || 0;
-                grandTotalQuantity += item.Quantity || 0;
-                return acc;
-            }, {});
-
-            Object.keys(groupedData).forEach((group) => {
-                let groupTotalGross = 0;
-                let groupTotalDiscount = 0;
-                let groupTotalNet = 0;
-                let groupTotalQty = 0;
-
-                htmlContent += `<tr class="section-head"><td colspan="10">Dish Group : ${group}</td></tr>`;
-
-                groupedData[group].forEach((item) => {
-                    groupTotalGross += item.BaseAmount || 0;
-                    groupTotalDiscount += item.ManualDiscountAmount || 0;
-                    groupTotalNet += item.TotalDetailLineAmount || 0;
-                    groupTotalQty += item.Quantity || 0;
-
-                    const grossPercent = grandTotalGross > 0 ? ((item.BaseAmount / grandTotalGross) * 100).toFixed(2) : "0.00";
-                    const netPercent = grandTotalNet > 0 ? ((item.TotalDetailLineAmount / grandTotalNet) * 100).toFixed(2) : "0.00";
-
-                    htmlContent += `
-                        <tr>
-                            <td>${item.DishCode || ""}</td>
-                            <td>${item.DishName || ""}</td>
-                            <td class="amount-col">${item.Quantity || 0}</td>
-                            <td class="amount-col">${grossPercent}%</td>
-                            <td class="amount-col">${(item.BaseAmount || 0).toFixed(2)}</td>
-                            <td class="amount-col">${(item.ManualDiscountAmount || 0).toFixed(2)}</td>
-                            <td class="amount-col">0.00%</td>
-                            <td class="amount-col">${(item.TotalDetailLineAmount || 0).toFixed(2)}</td>
-                            <td class="amount-col">${netPercent}%</td>
-                            <td class="amount-col">${(item.TotalDetailLineAmount || 0).toFixed(2)}</td>
-                        </tr>
-                    `;
-                });
-
-                htmlContent += `
-                    <tr class="total-row">
-                        <td colspan="2">Group Total</td>
-                        <td class="amount-col">${groupTotalQty}</td>
-                        <td></td>
-                        <td class="amount-col">${groupTotalGross.toFixed(2)}</td>
-                        <td class="amount-col">${groupTotalDiscount.toFixed(2)}</td>
-                        <td></td>
-                        <td class="amount-col">${groupTotalNet.toFixed(2)}</td>
-                        <td></td>
-                        <td class="amount-col">${groupTotalNet.toFixed(2)}</td>
-                    </tr>
-                `;
-            });
-
-            htmlContent += `
-                    <tr class="total-row" style="background-color: #d1d8dd !important;">
-                        <td colspan="2">Grand Total</td>
-                        <td class="amount-col">${grandTotalQuantity}</td>
-                        <td></td>
-                        <td class="amount-col">${grandTotalGross.toFixed(2)}</td>
-                        <td class="amount-col">${grandTotalDiscount.toFixed(2)}</td>
-                        <td></td>
-                        <td class="amount-col">${grandTotalNet.toFixed(2)}</td>
-                        <td></td>
-                        <td class="amount-col">${grandTotalNet.toFixed(2)}</td>
-                    </tr>
-                    <tr class="total-row">
-                        <td colspan="5" align="left">Total Receipts : ${reportData.totalReceipts || 0}</td>
-                        <td colspan="5" align="right">Average/Receipt : ${reportData.averageReceipt || "0.00"}</td>
-                    </tr>
-                </tbody>
+                        ${reportData.data.map(item => `
+                            <tr>
+                                <td style="padding: 6px; border: 1px solid #ddd;">${item.DishCode || ''}</td>
+                                <td style="padding: 6px; border: 1px solid #ddd;">${item.DishName || ''}</td>
+                                <td style="padding: 6px; border: 1px solid #ddd; text-align: right;">${item.Quantity || 0}</td>
+                                <td style="padding: 6px; border: 1px solid #ddd; text-align: right;">${(item.BaseAmount || 0).toFixed(2)}</td>
+                                <td style="padding: 6px; border: 1px solid #ddd; text-align: right;">${(item.ManualDiscountAmount || 0).toFixed(2)}</td>
+                                <td style="padding: 6px; border: 1px solid #ddd; text-align: right;">${(item.TotalDetailLineAmount || 0).toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
                 </table>
             `;
         }
-
+        
         htmlContent += `
                 </div>
-
                 <div class="signature">
                     <div>
-                        <div style="border-top: 1px solid #333; width: 180px; padding-top: 5px; text-align: center;">Cashier Signature</div>
+                        <div style="border-top: 1px solid #333; width: 180px; padding-top: 5px; text-align: center;">
+                            Cashier Signature
+                        </div>
                     </div>
                     <div>
-                        <div style="border-top: 1px solid #333; width: 180px; padding-top: 5px; text-align: center;">Authorized Signature</div>
+                        <div style="border-top: 1px solid #333; width: 180px; padding-top: 5px; text-align: center;">
+                            Authorized Signature
+                        </div>
                     </div>
                 </div>
-
                 <div class="footer">
                     <span>Printed On: ${printDate} ${printTime}</span>
                     <span>Powered by UNIPRO</span>
