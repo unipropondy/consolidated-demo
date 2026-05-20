@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import "./ConsoleSalesReport.css";
 
-const BASE_URL = "https://consolidated-demo-production.up.railway.app";
+const BASE_URL = process.env.REACT_APP_BASE_URL || "https://consolidated-demo-production.up.railway.app";
 
 const ConsoleSalesReport = ({ sidebarOpen }) => {
     const today = new Date().toISOString().split('T')[0];
